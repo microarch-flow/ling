@@ -44,6 +44,8 @@ class TranslatorClient:
 
     async def _call_openai(self, text: str, target_lang: str) -> str:
         base = (self._config.base_url or "https://api.openai.com").rstrip("/")
+        if base.endswith("/v1"):
+            base = base[:-3]
         system = _ZH_PROMPT if target_lang == "zh" else _EN_PROMPT
         resp = await self._client.post(
             f"{base}/v1/chat/completions",
@@ -61,6 +63,8 @@ class TranslatorClient:
 
     async def _call_anthropic(self, text: str, target_lang: str) -> str:
         base = (self._config.base_url or "https://api.anthropic.com").rstrip("/")
+        if base.endswith("/v1"):
+            base = base[:-3]
         system = _ZH_PROMPT if target_lang == "zh" else _EN_PROMPT
         resp = await self._client.post(
             f"{base}/v1/messages",
