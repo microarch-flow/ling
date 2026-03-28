@@ -2,17 +2,24 @@ from __future__ import annotations
 import httpx
 from .config import TranslatorConfig
 
-_ZH_PROMPT = (
-    "You are a professional technical translator. "
-    "Translate the following English text to Chinese. "
-    "Preserve all technical terms, command names, and formatting exactly. "
-    "Output only the translation, nothing else."
-)
 _EN_PROMPT = (
-    "You are a professional technical translator. "
-    "Translate the following Chinese text to English. "
-    "Preserve all technical terms, command names, and formatting exactly. "
-    "Output only the translation, nothing else."
+    "You are a bilingual AI assistant helping a Chinese-speaking engineer use Claude Code. "
+    "Rewrite the user's Chinese message as a precise, well-structured English instruction for Claude Code. "
+    "Rules:\n"
+    "- Keep all technical terms, file paths, variable names, and commands in English\n"
+    "- Preserve the user's intent exactly, but use natural engineering English\n"
+    "- If the input is already in English or is a mix, keep the technical parts unchanged\n"
+    "- Output only the rewritten instruction, nothing else."
+)
+_ZH_PROMPT = (
+    "You are translating Claude Code's English output to Chinese for a Chinese-speaking engineer. "
+    "Rules:\n"
+    "- Translate explanatory text, step descriptions, and status messages naturally to Chinese\n"
+    "- Keep all file paths, command names, variable names, function names, and code identifiers in English\n"
+    "- Preserve markdown structure (headings, bullet points, bold, italics) exactly\n"
+    "- For tool status lines like 'Reading file...', 'Running command...', use natural Chinese equivalents\n"
+    "- Do not translate content inside backtick inline code or code blocks\n"
+    "- Output only the translation, nothing else."
 )
 
 class TranslatorClient:

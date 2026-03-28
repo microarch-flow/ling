@@ -114,14 +114,14 @@ class AgentT:
                             QueueItem(
                                 seq=chunk.seq,
                                 text=chunk.content,
-                                is_code=(chunk.type == ChunkType.CODE),
+                                is_code=chunk.skip_translation,
                             )
                         )
             except asyncio.TimeoutError:
                 for chunk in self._parser.flush():
                     self._pending_chunks += 1
                     await self._queue.enqueue(
-                        QueueItem(seq=chunk.seq, text=chunk.content, is_code=False)
+                        QueueItem(seq=chunk.seq, text=chunk.content, is_code=chunk.skip_translation)
                     )
 
         self._tui.set_status("stopped")
@@ -138,7 +138,7 @@ def main() -> None:
     if not config_path.exists():
         print(f"Config not found at {config_path}")
         print("\nCreate it with:\n")
-        print("  mkdir -p ~/.t && cat > ~/.t/config.yaml << 'EOF'")
+        print("  mkdir -p ~/.ling && cat > ~/.ling/config.yaml << 'EOF'")
         print("translator:")
         print("  provider: openai")
         print("  api_key: YOUR_KEY")

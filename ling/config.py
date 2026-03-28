@@ -55,4 +55,4 @@ def load_config(path: Path) -> Config:
     return Config(translator=translator, cli=cli)
 
 def default_config_path() -> Path:
-    return Path.home() / ".t" / "config.yaml"
+    return Path.home() / ".ling" / "config.yaml"
