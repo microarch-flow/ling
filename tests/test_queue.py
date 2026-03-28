@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from t.queue import TranslationQueue, QueueItem
+from ling.queue import TranslationQueue, QueueItem
 
 async def make_translator(delay: float = 0.0):
     async def translate(text: str) -> str:

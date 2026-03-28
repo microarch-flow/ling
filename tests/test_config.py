@@ -1,7 +1,7 @@
 import pytest
 import tempfile
 from pathlib import Path
-from t.config import load_config, Config, TranslatorConfig, CLIConfig
+from ling.config import load_config, Config, TranslatorConfig, CLIConfig
 
 VALID_YAML = """
 translator:

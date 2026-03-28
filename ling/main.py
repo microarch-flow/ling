@@ -58,22 +58,22 @@ class AgentT:
         if cmd == "/restart":
             self._pty.stop()
             self._pty.start()
-            self._tui.append_output("[T] CC restarted.")
+            self._tui.append_output("[ling] CC restarted.")
             return
         if cmd == "/lang":
             parts = text.split()
             arg = parts[1].lower() if len(parts) > 1 else "toggle"
             if arg == "off":
                 self._translation_enabled = False
-                self._tui.append_output("[T] Translation disabled (raw mode).")
+                self._tui.append_output("[ling] Translation disabled (raw mode).")
             else:
                 self._translation_enabled = True
-                self._tui.append_output("[T] Translation enabled.")
+                self._tui.append_output("[ling] Translation enabled.")
             return
         if cmd == "/config":
             c = self._config
             self._tui.append_output(
-                f"[T] Config:\n"
+                f"[ling] Config:\n"
                 f"  provider: {c.translator.provider}\n"
                 f"  model: {c.translator.model}\n"
                 f"  cli: {c.cli.command}\n"

@@ -1,5 +1,5 @@
 import pytest
-from t.output_parser import OutputParser, Chunk, ChunkType
+from ling.output_parser import OutputParser, Chunk, ChunkType
 
 def test_plain_text_flushed_on_blank_line():
     parser = OutputParser()

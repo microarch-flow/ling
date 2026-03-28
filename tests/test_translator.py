@@ -1,8 +1,8 @@
 import pytest
 import httpx
 import respx
-from t.config import TranslatorConfig
-from t.translator import TranslatorClient
+from ling.config import TranslatorConfig
+from ling.translator import TranslatorClient
 
 OPENAI_CONFIG = TranslatorConfig(
     provider="openai",
