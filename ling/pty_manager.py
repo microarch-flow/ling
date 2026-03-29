@@ -3,7 +3,9 @@ from __future__ import annotations
 import asyncio
 import os
 import signal
+import termios
 from ptyprocess import PtyProcess
+from .log import log
 
 
 class PTYManager:
@@ -23,6 +25,11 @@ class PTYManager:
     def start(self) -> None:
         cmd = [self._command] + self._args
         self._process = PtyProcess.spawn(cmd, dimensions=(self._rows, self._cols))
+        # Disable terminal echo so input written to PTY isn't echoed back as output
+        attrs = termios.tcgetattr(self._process.fd)
+        attrs[3] &= ~termios.ECHO
+        termios.tcsetattr(self._process.fd, termios.TCSANOW, attrs)
+        log.debug(f"[pty] echo disabled")
 
     async def read(self, size: int = 4096) -> bytes:
         """
@@ -41,8 +48,9 @@ class PTYManager:
             self._process.write(data)
 
     def write_line(self, text: str) -> None:
-        """Write a line of text followed by newline to PTY stdin."""
-        self.write((text + "\n").encode())
+        """Write a line of text followed by carriage return to PTY stdin."""
+        log.debug(f"[pty] → 发送给codex: {repr(text)}")
+        self.write((text + "\r").encode())
 
     def forward_signal(self, sig: signal.Signals) -> None:
         """Forward a signal to the child process (e.g. SIGINT for Ctrl+C)."""

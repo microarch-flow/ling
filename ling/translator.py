@@ -1,25 +1,23 @@
 from __future__ import annotations
+import re
 import httpx
 from .config import TranslatorConfig
 
 _EN_PROMPT = (
-    "You are a bilingual AI assistant helping a Chinese-speaking engineer use Claude Code. "
-    "Rewrite the user's Chinese message as a precise, well-structured English instruction for Claude Code. "
-    "Rules:\n"
-    "- Keep all technical terms, file paths, variable names, and commands in English\n"
-    "- Preserve the user's intent exactly, but use natural engineering English\n"
-    "- If the input is already in English or is a mix, keep the technical parts unchanged\n"
-    "- Output only the rewritten instruction, nothing else."
+    "You are a translation engine. Translate the text between <text> and </text> from Chinese to English.\n"
+    "Rules: keep file paths, variable names, commands unchanged. Output only the translation.\n\n"
+    "Example:\n"
+    "<text>帮我列出当前目录的文件</text>\n"
+    "List the files in the current directory\n\n"
+    "Now translate:\n"
 )
 _ZH_PROMPT = (
-    "You are translating Claude Code's English output to Chinese for a Chinese-speaking engineer. "
-    "Rules:\n"
-    "- Translate explanatory text, step descriptions, and status messages naturally to Chinese\n"
-    "- Keep all file paths, command names, variable names, function names, and code identifiers in English\n"
-    "- Preserve markdown structure (headings, bullet points, bold, italics) exactly\n"
-    "- For tool status lines like 'Reading file...', 'Running command...', use natural Chinese equivalents\n"
-    "- Do not translate content inside backtick inline code or code blocks\n"
-    "- Output only the translation, nothing else."
+    "You are a translation engine. Translate the text between <text> and </text> from English to Chinese.\n"
+    "Rules: keep file paths, variable names, commands, code identifiers unchanged. Output only the translation.\n\n"
+    "Example:\n"
+    "<text>Reading file src/main.py...</text>\n"
+    "正在读取文件 src/main.py...\n\n"
+    "Now translate:\n"
 )
 
 class TranslatorClient:
@@ -32,15 +30,26 @@ class TranslatorClient:
         Translate text. target_lang: 'zh' (→Chinese) or 'en' (→English).
         Returns original text on timeout if fallback_on_timeout is True.
         """
+        from .log import log
+        import time
+        t0 = time.monotonic()
         try:
             if self._config.provider == "openai":
-                return await self._call_openai(text, target_lang)
+                result = await self._call_openai(text, target_lang)
             else:
-                return await self._call_anthropic(text, target_lang)
+                result = await self._call_anthropic(text, target_lang)
+            # Strip any <text>...</text> wrapper the model may have echoed back
+            result = re.sub(r'^<text>(.*)</text>$', r'\1', result.strip(), flags=re.DOTALL)
+            log.debug(f"[translator] {target_lang} 耗时{time.monotonic()-t0:.1f}s 原文={repr(text[:60])} 译文={repr(result[:60])}")
+            return result
         except httpx.TimeoutException:
+            log.warning(f"[translator] 超时({time.monotonic()-t0:.1f}s), fallback原文")
             if self._config.fallback_on_timeout:
                 return text
             raise
+
+    def _wrap(self, text: str) -> str:
+        return f"<text>{text}</text>"
 
     async def _call_openai(self, text: str, target_lang: str) -> str:
         base = (self._config.base_url or "https://api.openai.com").rstrip("/")
@@ -54,7 +63,7 @@ class TranslatorClient:
                 "model": self._config.model,
                 "messages": [
                     {"role": "system", "content": system},
-                    {"role": "user", "content": text},
+                    {"role": "user", "content": self._wrap(text)},
                 ],
             },
         )
@@ -76,7 +85,7 @@ class TranslatorClient:
                 "model": self._config.model,
                 "max_tokens": 4096,
                 "system": system,
-                "messages": [{"role": "user", "content": text}],
+                "messages": [{"role": "user", "content": self._wrap(text)}],
             },
         )
         resp.raise_for_status()
